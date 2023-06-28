@@ -1,0 +1,113 @@
+name: Work Item Warehouse CI/CD
+
+stages:
+
+- stage: DevInfra
+  displayName: Dev Infrastructure
+  jobs:
+  - job: DevInfraDeploy
+    displayName: Deploy to Dev
+    steps:
+    - task: AzureCLI@2
+      displayName: Deploy Bicep
+      name: BicepResults
+      inputs:
+        azureSubscription: azure-dev-connection
+        scriptType: ps
+        scriptLocation: inlineScript
+        inlineScript: |
+          $result = az deployment group create `
+            --resource-group "rg-devops-data-iac" `
+            --template-file ./WorkItemProcessor.Infra/main.bicep `
+            --parameters administratorLogin=dev administratorPassword=$(DEV_DB_ADMIN_PASS)
+          Write-Host "##vso[task.setvariable variable=functionAppName;isOutput=true]$($result.properties.outputs.functionAppName.value)"
+          Write-Host "##vso[task.setvariable variable=sqlConnectionString;isOutput=true]$($result.properties.outputs.sqlConnectionString.value)"
+
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: BuildFunctionApp
+    displayName: Build Function Apps
+    pool: windows-latest
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: '6.x'
+    - task: DotNetCoreCLI@2
+      inputs:
+          command: publish
+          arguments: '--configuration Release --output publish_output --os linux -a x64'
+          projects: 'WorkItemProcessor/WorkItemProcessor.csproj'
+          publishWebProjects: false
+          modifyOutputPath: false
+          zipAfterPublish: false
+    - task: ArchiveFiles@2
+      displayName: "Archive files"
+      inputs:
+          rootFolderOrFile: "$(System.DefaultWorkingDirectory)/publish_output"
+          includeRootFolder: false
+          archiveFile: "$(System.DefaultWorkingDirectory)/build$(Build.BuildId).zip"
+    - task: PublishBuildArtifacts@1
+      inputs:
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/build$(Build.BuildId).zip'
+          artifactName: 'functionapp'
+  - job: BuildDatabaseDeployment
+    displayName: Build Db Deployment
+    pool: windows-latest
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        version: '6.x'
+    - task: DotNetCoreCLI@2
+      inputs:
+          command: custom
+          custom: tool
+          arguments: 'install --global dotnet-ef'
+    - task: DotNetCoreCLI@2
+      inputs:
+          command: custom
+          custom: ef
+          arguments: 'migrations bundle --self-contained --output $(System.DefaultWorkingDirectory)/db_migrate.exe'
+    - task: PublishBuildArtifacts@1
+      inputs:
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/db_migrate.exe'
+          artifactName: 'db_migrate.exe'
+
+- stage: DeployDev
+  dependsOn: [DevInfra, Build]
+  displayName: Deploy to Dev
+  jobs:
+  - job: DeployDbUpdates
+    displayName: Apply DB Updates
+    variables:
+      sqlConnectionString: $[stageDependencies.DevInfra.DevInfraDeploy.outputs['BicepResults.sqlConnectionString']]
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+          downloadPath:  '$(System.DefaultWorkingDirectory)'
+          artifactName: 'db_migrate.exe'
+      displayName: Download Migration Utility
+    - script: db_migrate.exe --connection $(sqlConnectionString)
+      displayName: Apply Migrations
+  - job: DeployAppCode
+    displayName: Deploy App Code
+    variables:
+      functionAppName: $[stageDependencies.DevInfra.DevInfraDeploy.outputs['BicepResults.functionAppName']]
+    steps:
+    - task: DownloadBuildArtifacts@1
+      inputs:
+          downloadPath:  '$(System.DefaultWorkingDirectory)/app'
+          artifactName: 'functionapp'
+      displayName: Download App Code
+    - task: AzureCLI@2
+      displayName: Deploy Function App
+      inputs:
+        azureSubscription: azure-dev-connection
+        scriptType: ps
+        scriptLocation: inlineScript
+        inlineScript: |
+          az functionapp deployment source config-zip `
+            -g "rg-devops-data-iac" `
+            -n $(functionAppName) `
+            --src $(System.DefaultWorkingDirectory)/app/build$(Build.BuildId).zip
+    
