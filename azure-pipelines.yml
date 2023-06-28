@@ -1,5 +1,8 @@
 name: Work Item Warehouse CI/CD
 
+pool: 
+  vmImage: windows-latest
+
 stages:
 
 - stage: DevInfra
@@ -28,7 +31,6 @@ stages:
   jobs:
   - job: BuildFunctionApp
     displayName: Build Function Apps
-    pool: windows-latest
     steps:
     - task: UseDotNet@2
       inputs:
@@ -53,7 +55,6 @@ stages:
           artifactName: 'functionapp'
   - job: BuildDatabaseDeployment
     displayName: Build Db Deployment
-    pool: windows-latest
     steps:
     - task: UseDotNet@2
       inputs:
