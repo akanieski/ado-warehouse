@@ -18,8 +18,13 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
     name: 'Standard_LRS'
   }
 }
+resource workItemQueueServices 'Microsoft.Storage/storageAccounts/queueServices@2022-05-01' = {
+  name: 'default'
+  parent: storageAccount
+}
 resource workItemQueue 'Microsoft.Storage/storageAccounts/queueServices/queues@2022-05-01' = {
-  name: '${storageAccountName}/default/workitemchanges'
+  name: 'workitemchanges'
+  parent: workItemQueueServices
 }
 
 // Function App setup

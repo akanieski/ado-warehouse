@@ -68,7 +68,7 @@ stages:
       inputs:
           command: custom
           custom: ef
-          arguments: 'migrations bundle --self-contained --output $(System.DefaultWorkingDirectory)/db_migrate.exe'
+          arguments: 'migrations bundle --self-contained --output $(System.DefaultWorkingDirectory)/db_migrate.exe --project ./WorkItemProcessor.Data/WorkItemProcessor.Data.csproj'
     - task: PublishBuildArtifacts@1
       inputs:
           PathtoPublish: '$(System.DefaultWorkingDirectory)/db_migrate.exe'
