@@ -88,7 +88,7 @@ stages:
           downloadPath:  '$(System.DefaultWorkingDirectory)'
           artifactName: 'db_bundle'
       displayName: Download Migration Utility
-    - script: db_bundle/_migrate.exe --connection $(sqlConnectionString)
+    - bash: ./db_bundle/migrate.exe --connection $(sqlConnectionString)
       displayName: Apply Migrations
   - job: DeployAppCode
     displayName: Deploy App Code
@@ -97,7 +97,7 @@ stages:
     steps:
     - task: DownloadBuildArtifacts@1
       inputs:
-          downloadPath:  '$(System.DefaultWorkingDirectory)/app'
+          downloadPath:  '$(System.DefaultWorkingDirectory)'
           artifactName: 'functionapp'
       displayName: Download App Code
     - task: AzureCLI@2
@@ -110,5 +110,5 @@ stages:
           az functionapp deployment source config-zip `
             -g "rg-devops-data-iac" `
             -n $(functionAppName) `
-            --src $(System.DefaultWorkingDirectory)/app/build$(Build.BuildId).zip
+            --src $(System.DefaultWorkingDirectory)/functionapp/build$(Build.BuildId).zip
     
