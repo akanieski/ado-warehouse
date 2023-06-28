@@ -19,10 +19,10 @@ stages:
         scriptType: ps
         scriptLocation: inlineScript
         inlineScript: |
-          $result = az deployment group create `
+          $result = (az deployment group create `
             --resource-group "rg-devops-data-iac" `
             --template-file ./WorkItemProcessor.Infra/main.bicep `
-            --parameters administratorLogin=dev administratorPassword=$(DEV_DB_ADMIN_PASS)
+            --parameters administratorLogin=dev administratorPassword=$(DEV_DB_ADMIN_PASS)) | ConvertFrom-Json
           Write-Host "##vso[task.setvariable variable=functionAppName;isOutput=true]$($result.properties.outputs.functionAppName.value)"
           Write-Host "##vso[task.setvariable variable=sqlConnectionString;isOutput=true]$($result.properties.outputs.sqlConnectionString.value)"
 
