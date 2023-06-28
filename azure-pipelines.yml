@@ -68,11 +68,11 @@ stages:
       inputs:
           command: custom
           custom: ef
-          arguments: 'migrations bundle --self-contained --output $(System.DefaultWorkingDirectory)/db_migrate.exe --project ./WorkItemProcessor.Data/WorkItemProcessor.Data.csproj'
+          arguments: 'migrations bundle --self-contained --output $(System.DefaultWorkingDirectory)/migrate.exe --project ./WorkItemProcessor.Data/WorkItemProcessor.Data.csproj'
     - task: PublishBuildArtifacts@1
       inputs:
-          PathtoPublish: '$(System.DefaultWorkingDirectory)/db_migrate.exe'
-          artifactName: 'db_migrate.exe'
+          PathtoPublish: '$(System.DefaultWorkingDirectory)/migrate.exe'
+          artifactName: 'db_bundle'
 
 - stage: DeployDev
   dependsOn: [DevInfra, Build]
@@ -86,9 +86,9 @@ stages:
     - task: DownloadBuildArtifacts@1
       inputs:
           downloadPath:  '$(System.DefaultWorkingDirectory)'
-          artifactName: 'db_migrate.exe'
+          artifactName: 'db_bundle'
       displayName: Download Migration Utility
-    - script: db_migrate.exe --connection $(sqlConnectionString)
+    - script: db_bundle/_migrate.exe --connection $(sqlConnectionString)
       displayName: Apply Migrations
   - job: DeployAppCode
     displayName: Deploy App Code
