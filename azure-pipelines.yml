@@ -88,7 +88,7 @@ stages:
           downloadPath:  '$(System.DefaultWorkingDirectory)'
           artifactName: 'db_bundle'
       displayName: Download Migration Utility
-    - bash: ./db_bundle/migrate.exe --connection $(sqlConnectionString)
+    - bash: ./db_bundle/migrate.exe --connection '$(sqlConnectionString)'
       displayName: Apply Migrations
   - job: DeployAppCode
     displayName: Deploy App Code
