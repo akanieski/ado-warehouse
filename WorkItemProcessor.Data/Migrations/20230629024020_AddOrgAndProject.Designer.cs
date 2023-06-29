@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace WorkItemProcessor.Data.Migrations
 {
     [DbContext(typeof(WorkItemProcessorDbContext))]
-    partial class WorkItemProcessorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230629024020_AddOrgAndProject")]
+    partial class AddOrgAndProject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -98,25 +101,6 @@ namespace WorkItemProcessor.Data.Migrations
                     b.HasAnnotation("Relational:JsonPropertyName", "System.CreatedBy");
                 });
 
-            modelBuilder.Entity("WebHookEvent", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("ProcessedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RawData")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WebHookEvent");
-                });
-
             modelBuilder.Entity("WorkItemRevision", b =>
                 {
                     b.Property<long>("Id")
@@ -167,13 +151,6 @@ namespace WorkItemProcessor.Data.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasAnnotation("Relational:JsonPropertyName", "System.Title");
 
-                    b.Property<string>("Url")
-                        .HasColumnType("nvarchar(max)")
-                        .HasAnnotation("Relational:JsonPropertyName", "Url");
-
-                    b.Property<long?>("WebHookEventId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("WorkItemType")
                         .HasColumnType("nvarchar(max)")
                         .HasAnnotation("Relational:JsonPropertyName", "System.WorkItemType");
@@ -183,8 +160,6 @@ namespace WorkItemProcessor.Data.Migrations
                     b.HasIndex("ChangedById");
 
                     b.HasIndex("CreatedById");
-
-                    b.HasIndex("WebHookEventId");
 
                     b.ToTable("WorkItemRevisions");
                 });
@@ -208,15 +183,9 @@ namespace WorkItemProcessor.Data.Migrations
                         .WithMany()
                         .HasForeignKey("CreatedById");
 
-                    b.HasOne("WebHookEvent", "WebHookEvent")
-                        .WithMany()
-                        .HasForeignKey("WebHookEventId");
-
                     b.Navigation("ChangedBy");
 
                     b.Navigation("CreatedBy");
-
-                    b.Navigation("WebHookEvent");
                 });
 
             modelBuilder.Entity("Organization", b =>

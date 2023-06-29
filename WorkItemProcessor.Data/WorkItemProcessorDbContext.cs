@@ -16,5 +16,7 @@ public class WorkItemProcessorDbContext : DbContext
     }
 
     public DbSet<WorkItemRevision> WorkItemRevisions { get; set; }
+    public DbSet<Organization> Organizations { get; set; }
+    public DbSet<Project> Projects { get; set; }
     public DbSet<User> Users { get; set; }
 }

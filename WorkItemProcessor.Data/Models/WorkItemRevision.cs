@@ -1,6 +1,7 @@
 
 
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 public class WorkItemRevision
@@ -40,7 +41,12 @@ public class WorkItemRevision
     [JsonPropertyName("System.Title")]
     public string Title { get; set; }
 
+    [JsonPropertyName("Url")]
+    public string Url { get; set; }
+
     [JsonPropertyName("Microsoft.VSTS.Common.Severity")]
     public string Severity { get; set; }
+
+    public WebHookEvent WebHookEvent { get; set; }
 }
 
